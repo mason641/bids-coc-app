@@ -1,7 +1,8 @@
 {
-  "name": "BIDS Asbestos COC Collector",
+  "id": "./index.html",
+  "name": "BIDS Asbestos & Mold COC Collector",
   "short_name": "BIDS COC",
-  "description": "Asbestos sample logging and CA Labs Chain of Custody generator for BIDS LLC field personnel.",
+  "description": "Asbestos & Mold sample logging and CA Labs Chain of Custody generator for BIDS LLC field personnel.",
   "start_url": "./index.html",
   "display": "standalone",
   "background_color": "#f3f4f6",
