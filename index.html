@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>BIDS - Asbestos Sample Collector & CA Labs COC</title>
+  <title>BIDS - Sample Collector & CA Labs COC (Asbestos & Mold)</title>
   
   <!-- PWA Manifest & Mobile Meta Tags -->
   <link rel="manifest" href="manifest.json">
@@ -26,7 +26,13 @@
       </button>
     </div>
 
-    <h1 class="text-xl font-bold text-gray-800 mb-4">BIDS Asbestos Field Sample Logger</h1>
+    <div class="flex justify-between items-center mb-4 border-b pb-3">
+      <h1 class="text-xl font-bold text-gray-800">BIDS Field Sample Logger</h1>
+      <!-- Reset / Clear Project Button -->
+      <button onclick="clearProjectData()" class="bg-red-600 text-white px-3 py-1.5 rounded hover:bg-red-700 text-xs font-semibold">
+        🗑️ New Project / Clear All
+      </button>
+    </div>
     
     <!-- Input Form -->
     <form id="sampleForm" class="space-y-4">
@@ -43,16 +49,40 @@
           <label class="block text-sm font-medium text-gray-700">P.O. #</label>
           <input type="text" id="poNumber" class="mt-1 w-full border border-gray-300 rounded p-2 text-sm">
         </div>
+        
+        <!-- Analysis Discipline Category -->
+        <div>
+          <label class="block text-sm font-medium text-gray-700">Analysis Category</label>
+          <select id="analysisCategory" onchange="handleCategoryChange()" class="mt-1 w-full border border-gray-300 rounded p-2 text-sm font-semibold text-blue-700">
+            <option value="Asbestos">Asbestos (EPA 600-PLM Bulk)</option>
+            <option value="Mold">Mold / IAQ (Spore Trap / Bulk / Swab)</option>
+          </select>
+        </div>
+
+        <!-- Mold Media Type (Shown conditionally) -->
+        <div id="moldMediaContainer" class="hidden">
+          <label class="block text-sm font-medium text-gray-700">Mold Sampling Media</label>
+          <select id="moldMedia" class="mt-1 w-full border border-gray-300 rounded p-2 text-sm">
+            <option>Air-O-Cell Cassette</option>
+            <option>Cyclex-D Cassette</option>
+            <option>Tape Lift / Swab / Bulk</option>
+            <option>Allergen Particle</option>
+            <option>Anderson / Bacteria Cultures</option>
+          </select>
+        </div>
+
         <div>
           <label class="block text-sm font-medium text-gray-700">Turnaround Time</label>
           <select id="taTime" class="mt-1 w-full border border-gray-300 rounded p-2 text-sm">
-            <option>24 hour</option>
-            <option>2 days</option>
-            <option>3 days</option>
-            <option>5 days</option>
-            <option>2 hour (Rush)</option>
-            <option>4 hour (Rush)</option>
+            <option id="ta2hr" value="2 hour">2 hour (Rush - Asbestos Only)</option>
+            <option value="4 hour">4 hour (Rush)</option>
+            <option value="8 hour">8 hour</option>
+            <option value="24 hour" selected>24 hour</option>
+            <option value="2 days">2 days</option>
+            <option value="3 days">3 days</option>
+            <option value="5 days">5 days</option>
           </select>
+          <span id="moldTaWarning" class="text-xs text-red-500 hidden font-semibold">Note: 2-hour turnaround is not available for Mold analyses.</span>
         </div>
       </div>
 
@@ -62,19 +92,19 @@
       <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
         <div>
           <label class="block text-xs font-medium text-gray-700">Sample #</label>
-          <input type="text" id="sampleNum" class="mt-1 w-full border border-gray-300 rounded p-2 text-sm" placeholder="e.g. S-01">
+          <input type="text" id="sampleNum" class="mt-1 w-full border border-gray-300 rounded p-2 text-sm" placeholder="e.g. S-01 or M-01">
         </div>
         <div>
           <label class="block text-xs font-medium text-gray-700">Description</label>
-          <input type="text" id="sampleDesc" class="mt-1 w-full border border-gray-300 rounded p-2 text-sm" placeholder="e.g. 9x9 Floor Tile">
+          <input type="text" id="sampleDesc" class="mt-1 w-full border border-gray-300 rounded p-2 text-sm" placeholder="e.g. Drywall or Air Sample">
         </div>
         <div>
           <label class="block text-xs font-medium text-gray-700">Location</label>
-          <input type="text" id="sampleLoc" class="mt-1 w-full border border-gray-300 rounded p-2 text-sm" placeholder="e.g. Room 101">
+          <input type="text" id="sampleLoc" class="mt-1 w-full border border-gray-300 rounded p-2 text-sm" placeholder="e.g. Living Room">
         </div>
         <div>
-          <label class="block text-xs font-medium text-gray-700">Volume/Qty</label>
-          <input type="text" id="sampleVol" class="mt-1 w-full border border-gray-300 rounded p-2 text-sm" placeholder="Vol / N/A">
+          <label class="block text-xs font-medium text-gray-700">Volume / Air Flow (L)</label>
+          <input type="text" id="sampleVol" class="mt-1 w-full border border-gray-300 rounded p-2 text-sm" placeholder="e.g. 75L or N/A">
         </div>
       </div>
 
@@ -83,12 +113,12 @@
       </button>
     </form>
 
-    <div class="mt-6 flex flex-wrap gap-3">
+    <div class="mt-6 flex flex-wrap gap-3 border-t pt-4">
       <button onclick="generatePDF()" class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 text-sm font-medium">
-        Save PDF
+        📄 Save PDF
       </button>
       <button onclick="window.print()" class="bg-gray-600 text-white px-4 py-2 rounded hover:bg-gray-700 text-sm font-medium">
-        Print COC
+        🖨️ Print COC
       </button>
     </div>
   </div>
@@ -110,7 +140,7 @@
       <div><strong>P.O. #:</strong> <span id="pdfPONumber">-</span></div>
       <div><strong>Turnaround Time:</strong> <span id="pdfTATime">-</span></div>
       <div><strong>Send Reports To:</strong> Field Team</div>
-      <div><strong>Analysis Requested:</strong> EPA 600-PLM Bulk</div>
+      <div><strong>Analysis Requested:</strong> <span id="pdfAnalysisReq">EPA 600-PLM Bulk</span></div>
     </div>
 
     <table class="w-full text-xs border-collapse border border-black mb-6">
@@ -119,7 +149,7 @@
           <th class="border border-black p-1">Sample #</th>
           <th class="border border-black p-1">Description</th>
           <th class="border border-black p-1">Location</th>
-          <th class="border border-black p-1">Volume</th>
+          <th class="border border-black p-1">Volume / Flow</th>
           <th class="border border-black p-1">Date/Time</th>
         </tr>
       </thead>
@@ -144,7 +174,6 @@
   </div>
 
   <script>
-    // Updated line 133 with your deployed Google Apps Script Web App Endpoint
     const GOOGLE_APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbz3v0ve-QxO19urfXXGzDnPFY7yqG0e5vxE0pwH9WzRL7hJjtriURxk9T1pM3rQJ915fg/exec";
 
     // 1. Service Worker Registration
@@ -171,12 +200,37 @@
       checkSyncStatus();
     };
 
-    // 3. Save Sample Entry Locally
+    // 3. Category & Turnaround Time Handling for Mold/Asbestos
+    function handleCategoryChange() {
+      const category = document.getElementById('analysisCategory').value;
+      const moldMediaContainer = document.getElementById('moldMediaContainer');
+      const ta2hr = document.getElementById('ta2hr');
+      const taTime = document.getElementById('taTime');
+      const moldTaWarning = document.getElementById('moldTaWarning');
+
+      if (category === 'Mold') {
+        moldMediaContainer.classList.remove('hidden');
+        ta2hr.disabled = true;
+        if (taTime.value === '2 hour') {
+          taTime.value = '4 hour';
+          moldTaWarning.classList.remove('hidden');
+        }
+      } else {
+        moldMediaContainer.classList.add('hidden');
+        ta2hr.disabled = false;
+        moldTaWarning.classList.add('hidden');
+      }
+      renderStoredSamples();
+    }
+
+    // 4. Save Sample Entry Locally
     function saveSampleLocally() {
       const sampleNum = document.getElementById('sampleNum').value;
       const sampleDesc = document.getElementById('sampleDesc').value;
       const sampleLoc = document.getElementById('sampleLoc').value;
       const sampleVol = document.getElementById('sampleVol').value || 'N/A';
+      const category = document.getElementById('analysisCategory').value;
+      const moldMedia = document.getElementById('moldMedia').value;
       
       if (!sampleNum || !sampleDesc) {
         alert('Please complete Sample Number and Description.');
@@ -188,6 +242,8 @@
         projectNumber: document.getElementById('projectNumber').value,
         poNumber: document.getElementById('poNumber').value,
         taTime: document.getElementById('taTime').value,
+        analysisCategory: category,
+        moldMedia: category === 'Mold' ? moldMedia : 'N/A',
         sampleNum,
         sampleDesc,
         sampleLoc,
@@ -213,8 +269,9 @@
       };
     }
 
-    // 4. Render Samples to Screen and Printable COC Template
+    // 5. Render Samples to Screen and Printable COC Template
     function renderStoredSamples() {
+      if (!db) return;
       const tx = db.transaction('samples', 'readonly');
       const store = tx.objectStore('samples');
       const req = store.getAll();
@@ -224,12 +281,33 @@
         const tbody = document.getElementById('pdfSampleTable');
         tbody.innerHTML = '';
 
+        const category = document.getElementById('analysisCategory').value;
+        const moldMedia = document.getElementById('moldMedia').value;
+
+        // Set analysis requested line on PDF header
+        if (category === 'Mold') {
+          document.getElementById('pdfAnalysisReq').innerText = `Mold / IAQ (${moldMedia})`;
+        } else {
+          document.getElementById('pdfAnalysisReq').innerText = 'EPA 600-PLM Bulk (Asbestos)';
+        }
+
         if (samples.length > 0) {
           const last = samples[samples.length - 1];
           document.getElementById('pdfProjectName').innerText = last.projectName || '-';
           document.getElementById('pdfProjectNumber').innerText = last.projectNumber || '-';
           document.getElementById('pdfPONumber').innerText = last.poNumber || '-';
           document.getElementById('pdfTATime').innerText = last.taTime || '-';
+          
+          if (last.analysisCategory === 'Mold') {
+            document.getElementById('pdfAnalysisReq').innerText = `Mold / IAQ (${last.moldMedia})`;
+          } else {
+            document.getElementById('pdfAnalysisReq').innerText = 'EPA 600-PLM Bulk (Asbestos)';
+          }
+        } else {
+          document.getElementById('pdfProjectName').innerText = document.getElementById('projectName').value || '-';
+          document.getElementById('pdfProjectNumber').innerText = document.getElementById('projectNumber').value || '-';
+          document.getElementById('pdfPONumber').innerText = document.getElementById('poNumber').value || '-';
+          document.getElementById('pdfTATime').innerText = document.getElementById('taTime').value || '-';
         }
 
         samples.forEach(s => {
@@ -245,7 +323,25 @@
       };
     }
 
-    // 5. Background Sync Engine to Google Apps Script
+    // 6. Clear/Reset Project Function
+    function clearProjectData() {
+      const confirmReset = confirm("Are you sure you want to clear this project and start a new COC? Unsaved local sample records will be removed.");
+      if (!confirmReset) return;
+
+      const tx = db.transaction('samples', 'readwrite');
+      const store = tx.objectStore('samples');
+      store.clear();
+
+      tx.oncomplete = () => {
+        document.getElementById('sampleForm').reset();
+        handleCategoryChange();
+        renderStoredSamples();
+        checkSyncStatus();
+        alert("Project form and sample memory cleared! You can start a new Chain of Custody.");
+      };
+    }
+
+    // 7. Background Sync Engine to Google Apps Script
     function checkSyncStatus() {
       if (!db) return;
       const tx = db.transaction('samples', 'readonly');
